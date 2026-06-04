@@ -8,11 +8,14 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates tar \
  && curl -fsSL -o /tmp/sui.tgz \
     "https://github.com/MystenLabs/sui/releases/download/${SUI_VERSION}/sui-${SUI_VERSION}-ubuntu-x86_64.tgz" \
- && tar -xzf /tmp/sui.tgz -C /usr/local/bin sui \
- && rm /tmp/sui.tgz \
+ && mkdir -p /tmp/sui \
+ && tar -xzf /tmp/sui.tgz -C /tmp/sui \
+ && install -m 0755 "$(find /tmp/sui -type f -name sui | head -n1)" /usr/local/bin/sui \
+ && rm -rf /tmp/sui /tmp/sui.tgz \
  && apt-get purge -y curl \
  && apt-get autoremove -y \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && sui --version
 
 # --- pnpm via corepack ---
 RUN corepack enable && corepack prepare pnpm@latest --activate
