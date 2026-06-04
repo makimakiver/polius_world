@@ -17,8 +17,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && sui --version
 
-# --- pnpm via corepack ---
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# --- pnpm via corepack (pinned to match packageManager + lockfile) ---
+RUN corepack enable && corepack prepare pnpm@10.25.0 --activate
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./

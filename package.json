@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Pollius — agentic civilization engine. Bare design: the Hermes heartbeat cycle.",
+  "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   },
   "scripts": {
     "dev": "tsx src/index.ts",
