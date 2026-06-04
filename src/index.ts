@@ -1,10 +1,11 @@
 // Pollius — bare cycle entrypoint. Wires the components and starts the scheduler.
+import "dotenv/config"; // load .env locally; no-op when absent (e.g. on Railway)
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadConfig } from "./config.js";
 import { HermesRegistry } from "./hermes/registry.js";
 import { HermesAgent } from "./agent/hermesAgent.js";
-import { Executor, loadKeypair } from "./executor/executor.js";
+import { Executor, keypairFromSecret } from "./executor/executor.js";
 import { EvaluatorSwarm } from "./evaluators/index.js";
 import { NoopStorage } from "./storage/storage.js";
 import { Heartbeat } from "./heartbeat.js";
@@ -13,8 +14,8 @@ import { Scheduler } from "./scheduler.js";
 async function main(): Promise<void> {
   const cfg = loadConfig();
 
-  // Identity: the keypair from file. Only the executor ever sees it.
-  const keypair = await loadKeypair(cfg.keypairFile);
+  // Identity: the keypair decoded from the env secret. Only the executor sees it.
+  const keypair = keypairFromSecret(cfg.keypairSecret);
   const executor = new Executor(keypair, cfg.suiNetwork);
   console.log(`Hermes identity (address): ${executor.address}`);
   console.log(`Network: ${cfg.suiNetwork}`);
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
 
   const heartbeat = new Heartbeat({
     cfg,
-    registry: new HermesRegistry(),
+    registry: await HermesRegistry.load(),
     // Agent is given only the PUBLIC address — never the key.
     agent: new HermesAgent({ workdir: cfg.workdir, senderAddress: executor.address }),
     executor,

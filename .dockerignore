@@ -1,0 +1,6 @@
+node_modules
+.workdir
+.secrets
+.env
+docs
+*.log

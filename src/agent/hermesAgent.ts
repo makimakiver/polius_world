@@ -10,6 +10,7 @@ import type { Artifact, Skill } from "../types.js";
 
 /** Bash patterns that could exfiltrate a key or sign — denied outright. */
 const FORBIDDEN_COMMAND_PATTERNS = [
+  /\.env\b/i, // the signing key lives in .env — agent must never read it
   /keytool/i,
   /\.keystore/i,
   /sui[._-]?config/i,

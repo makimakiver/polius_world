@@ -1,9 +1,8 @@
 // The trusted executor — the ONLY component that holds the key.
 //
-// Loads the Hermes keypair from a file (never exposed to the agent), signs the
-// agent's unsigned transaction, and submits it to testnet. Returns the real result
-// that the Correctness evaluator grades against.
-import { readFile } from "node:fs/promises";
+// Receives the Hermes keypair (decoded from the HERMES_KEYPAIR env secret, never
+// exposed to the agent), signs the agent's unsigned transaction, and submits it to
+// testnet. Returns the real result that the Correctness evaluator grades against.
 import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { decodeSuiPrivateKey } from "@mysten/sui/cryptography";
@@ -52,10 +51,9 @@ export class Executor {
   }
 }
 
-/** Load the Hermes keypair from a file containing a `suiprivkey1...` bech32 string. */
-export async function loadKeypair(file: string): Promise<Ed25519Keypair> {
-  const raw = (await readFile(file, "utf8")).trim();
-  const { schema, secretKey } = decodeSuiPrivateKey(raw);
+/** Decode a `suiprivkey1...` bech32 secret into an Ed25519 keypair. */
+export function keypairFromSecret(secret: string): Ed25519Keypair {
+  const { schema, secretKey } = decodeSuiPrivateKey(secret.trim());
   if (schema !== "ED25519") {
     throw new Error(`Hermes key must be ED25519, got ${schema}`);
   }

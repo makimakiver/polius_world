@@ -29,16 +29,11 @@ signs. The agent proposes; the executor signs.
 ```bash
 pnpm install
 
-# Point the CLI at testnet (the executor also forces the testnet RPC).
-sui client switch --env testnet
+# Generate the Hermes signing key (writes HERMES_KEYPAIR to .env):
+pnpm keygen
+#   …then fund the printed address: https://faucet.sui.io  (or `sui client faucet`)
 
-# Create the Hermes signing key in suiprivkey form and fund it:
-mkdir -p .secrets
-sui keytool generate ed25519           # note the address + suiprivkey
-echo 'suiprivkey1....' > .secrets/hermes.key
-#   then fund that address: https://faucet.sui.io  (or `sui client faucet`)
-
-cp .env.example .env                   # set ANTHROPIC_API_KEY, paths
+cp .env.example .env   # then set ANTHROPIC_API_KEY (keygen already set HERMES_KEYPAIR)
 ```
 
 ## Run
@@ -46,4 +41,21 @@ cp .env.example .env                   # set ANTHROPIC_API_KEY, paths
 ```bash
 pnpm beat          # one heartbeat (HEARTBEAT_MAX_CYCLES=1)
 ```
-# polius_world
+
+## Deploy to Railway
+
+Pollius runs as a long-lived **worker** (the resident scheduler). The included
+`Dockerfile` provides Node, pnpm, and the **Sui CLI** the Hermes agent shells out to.
+
+1. Create a Railway project from this repo. `railway.json` selects the Dockerfile
+   builder automatically.
+2. Set service variables:
+   - `ANTHROPIC_API_KEY` — your key.
+   - `HERMES_KEYPAIR` — a funded `suiprivkey1...` (run `pnpm keygen` locally to make
+     one, fund its address, then paste the value here).
+   - `SUI_NETWORK=testnet`
+   - `HEARTBEAT_CRON=* * * * *` (every minute) and `HEARTBEAT_MAX_CYCLES=0` (run forever).
+3. Deploy. Logs show one `♥ beat` per scheduled tick.
+
+> The Sui CLI version is pinned via the `SUI_VERSION` build arg in the `Dockerfile`;
+> bump it to a current tag from the MystenLabs/sui releases if the download 404s.

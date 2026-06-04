@@ -1,5 +1,4 @@
 // Central configuration, read once from the environment at startup.
-import { resolve } from "node:path";
 
 export type SuiNetwork = "testnet" | "devnet" | "localnet" | "mainnet";
 
@@ -13,8 +12,9 @@ export interface Weights {
 
 export interface Config {
   anthropicApiKey: string;
+  /** The Hermes signing secret (`suiprivkey1...`). Only the executor decodes it. */
+  keypairSecret: string;
   suiNetwork: SuiNetwork;
-  keypairFile: string;
   workdir: string;
   /** Cron expression that drives the heartbeat, e.g. "* * * * *" (every minute). */
   cron: string;
@@ -32,12 +32,24 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/** The signing key, with a guidance message pointing at the keygen CLI. */
+function requireKeypairSecret(): string {
+  const value = process.env.HERMES_KEYPAIR;
+  if (!value || !value.trim()) {
+    throw new Error(
+      "No HERMES_KEYPAIR set. Run `pnpm keygen` to create one (it writes to .env), " +
+        "then fund the printed address: https://faucet.sui.io",
+    );
+  }
+  return value.trim();
+}
+
 export function loadConfig(): Config {
   return {
     anthropicApiKey: requireEnv("ANTHROPIC_API_KEY"),
+    keypairSecret: requireKeypairSecret(),
     suiNetwork: (process.env.SUI_NETWORK ?? "testnet") as SuiNetwork,
-    keypairFile: resolve(process.env.HERMES_KEYPAIR_FILE ?? "./.secrets/hermes.key"),
-    workdir: resolve(process.env.HERMES_WORKDIR ?? "./.workdir"),
+    workdir: process.env.HERMES_WORKDIR ?? "./.workdir",
     cron: process.env.HEARTBEAT_CRON ?? "* * * * *",
     runOnStart: (process.env.HEARTBEAT_RUN_ON_START ?? "true") !== "false",
     maxCycles: Number(process.env.HEARTBEAT_MAX_CYCLES ?? "1"),
